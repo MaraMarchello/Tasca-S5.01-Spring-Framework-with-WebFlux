@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  r2dbc:
+    url: r2dbc:mysql://localhost:3307/blackjack
+    username: root
+    password: 78446660579
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
+  
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: blackjack
+      auto-index-creation: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+    disable-swagger-default-url: true
+    config-url: /v3/api-docs/swagger-config
+    operations-sorter: alpha
+    tags-sorter: alpha
+    doc-expansion: none
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+    syntax-highlight:
+      theme: monokai
+    display-request-duration: true
+    filter: true
+    deep-linking: true
+    persist-authorization: true
+    layout: BaseLayout
+    try-it-out-enabled: true
+    show-extensions: true
+    show-common-extensions: true
+    groups-order: desc
+  show-actuator: false
+  packages-to-scan: com.blackjack.controller
+  group-configs:
+    - group: public-apis
+      paths-to-match: /api/**
+      packages-to-scan: com.blackjack.controller
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  model-and-view-allowed: false
+
+logging:
+  level:
+    org.springframework.data.r2dbc: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.springdoc: DEBUG 
