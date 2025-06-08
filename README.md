@@ -1,5 +1,7 @@
 🃏 Blackjack API
+
 📄 Descripción - Ejercicio
+
 Esta es una API REST reactiva para el juego de Blackjack (21) desarrollada con Spring Boot. El proyecto implementa la lógica completa del juego de Blackjack, incluyendo gestión de jugadores, partidas, cartas y estadísticas.
 
 La aplicación utiliza una arquitectura de doble base de datos:
@@ -9,6 +11,7 @@ MongoDB para el almacenamiento de estados de partidas y acciones del juego
 El objetivo del ejercicio es crear una API escalable y mantenible que permita a los usuarios jugar al Blackjack de manera interactiva, con seguimiento completo de estadísticas y historial de partidas.
 
 💻 Tecnologías utilizadas
+
 Framework Principal
 Spring Boot 3.2.3 - Framework principal de la aplicación
 Spring WebFlux - Programación reactiva para APIs no bloqueantes
@@ -32,6 +35,7 @@ Spring Boot Test - Testing de aplicaciones Spring Boot
 DevOps
 Docker & Docker Compose - Contenedorización de bases de datos
 Swagger UI - Interfaz de documentación interactiva
+
 📋 REQUISITOS
 Software Requerido
 Java 21 o superior
@@ -44,6 +48,7 @@ Puerto 27017 - MongoDB
 Memoria Recomendada
 Mínimo: 4GB RAM
 Recomendado: 8GB RAM para desarrollo completo
+
 🛠️ Instalación
 1. Clonar el Repositorio
 git clone [URL_DEL_REPOSITORIO]
