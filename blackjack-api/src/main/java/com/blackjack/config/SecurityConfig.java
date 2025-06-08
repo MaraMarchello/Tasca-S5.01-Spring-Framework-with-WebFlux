@@ -20,16 +20,10 @@ public class SecurityConfig {
         http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/").permitAll()  // Allow access to root endpoint
-                .pathMatchers("/api/test/**").permitAll()  // Allow access to test endpoints
-                .pathMatchers("/swagger-ui/**").permitAll()
-                .pathMatchers("/v3/api-docs/**").permitAll()
-                .pathMatchers("/swagger-ui.html").permitAll()
-                .pathMatchers("/webjars/**").permitAll()
-                .anyExchange().authenticated()
+                .anyExchange().permitAll()  // Allow all endpoints for development
             )
-            .formLogin(formLogin -> formLogin.disable())
-            .httpBasic(httpBasic -> {});
+            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
         
         return http.build();
     }

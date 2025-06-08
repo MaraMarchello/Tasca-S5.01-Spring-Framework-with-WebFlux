@@ -16,10 +16,11 @@ public class Game {
     @Id
     private String id;
     private Long playerId;
-    private GameStatus status;
     private Hand playerHand;
     private Hand dealerHand;
     private BigDecimal bet;
+    private BigDecimal insuranceBet;
+    private GameStatus status;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private GameResult result;
@@ -28,15 +29,17 @@ public class Game {
     public Game(Long playerId, BigDecimal bet) {
         this.playerId = playerId;
         this.bet = bet;
-        this.status = GameStatus.IN_PROGRESS;
         this.playerHand = new Hand();
         this.dealerHand = new Hand();
+        this.status = GameStatus.CREATED;
         this.startTime = LocalDateTime.now();
         this.actions = new ArrayList<>();
     }
 
     public enum GameStatus {
-        IN_PROGRESS, COMPLETED, CANCELLED
+        CREATED,
+        IN_PROGRESS,
+        COMPLETED
     }
 
     public enum GameResult {

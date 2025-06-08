@@ -1,7 +1,7 @@
 package com.blackjack.model;
 
-import com.blackjack.util.Rank;
-import com.blackjack.util.Suit;
+import com.blackjack.model.Card.Rank;
+import com.blackjack.model.Card.Suit;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,7 +9,7 @@ class CardTest {
 
     @Test
     void testCardCreation() {
-        Card card = new Card(Rank.ACE, Suit.HEARTS);
+        Card card = new Card(Suit.HEARTS, Rank.ACE);
         assertEquals(Rank.ACE, card.getRank());
         assertEquals(Suit.HEARTS, card.getSuit());
         assertTrue(card.isFaceUp());
@@ -17,22 +17,22 @@ class CardTest {
 
     @Test
     void testCardValue() {
-        Card aceCard = new Card(Rank.ACE, Suit.HEARTS);
+        Card aceCard = new Card(Suit.HEARTS, Rank.ACE);
         assertEquals(1, aceCard.getValue());
 
-        Card kingCard = new Card(Rank.KING, Suit.SPADES);
+        Card kingCard = new Card(Suit.SPADES, Rank.KING);
         assertEquals(10, kingCard.getValue());
 
-        Card fiveCard = new Card(Rank.FIVE, Suit.DIAMONDS);
+        Card fiveCard = new Card(Suit.DIAMONDS, Rank.FIVE);
         assertEquals(5, fiveCard.getValue());
     }
 
     @Test
     void testCardToString() {
-        Card faceUpCard = new Card(Rank.ACE, Suit.HEARTS);
+        Card faceUpCard = new Card(Suit.HEARTS, Rank.ACE);
         assertEquals("♥A", faceUpCard.toString());
 
-        Card faceDownCard = new Card(Rank.ACE, Suit.HEARTS, false);
+        Card faceDownCard = new Card(Suit.HEARTS, Rank.ACE, false);
         assertEquals("🂠", faceDownCard.toString());
     }
 } 

@@ -29,8 +29,14 @@ extra["junitVersion"] = "5.10.2"
 extra["springdocVersion"] = "2.3.0"
 
 dependencies {
+	// MongoDB (reactive) for Game entities
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+	
+	// R2DBC for Player entities  
 	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+	implementation("org.springframework.data:spring-data-r2dbc")
+	
+	// Web and validation
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -43,8 +49,8 @@ dependencies {
 	compileOnly("org.projectlombok:lombok:${property("lombokVersion")}")
 	annotationProcessor("org.projectlombok:lombok:${property("lombokVersion")}")
 	
-	runtimeOnly("com.mysql:mysql-connector-j")
-	runtimeOnly("io.asyncer:r2dbc-mysql")
+	// MySQL R2DBC connector
+	runtimeOnly("io.asyncer:r2dbc-mysql:1.0.5")
 	
 	testImplementation("org.junit.jupiter:junit-jupiter:${property("junitVersion")}")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -54,7 +60,6 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mongodb")
 	testImplementation("org.testcontainers:mysql")
-	testImplementation("org.testcontainers:r2dbc")
 }
 
 dependencyManagement {

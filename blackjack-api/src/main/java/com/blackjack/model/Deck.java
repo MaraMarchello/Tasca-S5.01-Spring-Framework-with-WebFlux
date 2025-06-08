@@ -1,7 +1,7 @@
 package com.blackjack.model;
 
-import com.blackjack.util.Rank;
-import com.blackjack.util.Suit;
+import com.blackjack.model.Card.Rank;
+import com.blackjack.model.Card.Suit;
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +19,7 @@ public class Deck {
         cards.clear();
         for (Suit suit : Suit.values()) {
             for (Rank rank : Rank.values()) {
-                cards.add(new Card(rank, suit));
+                cards.add(new Card(suit, rank));
             }
         }
         shuffle();

@@ -7,12 +7,9 @@ import java.util.List;
 @Data
 public class Hand {
     private List<Card> cards = new ArrayList<>();
-    private boolean isBusted = false;
-    private boolean isBlackjack = false;
 
     public void addCard(Card card) {
         cards.add(card);
-        updateStatus();
     }
 
     public int getValue() {
@@ -20,25 +17,42 @@ public class Hand {
         int aces = 0;
 
         for (Card card : cards) {
-            if (card.getRank() == com.blackjack.util.Rank.ACE) {
+            if (card.isAce()) {
                 aces++;
             }
             value += card.getValue();
         }
 
-        // Handle aces
-        while (value <= 11 && aces > 0) {
-            value += 10;
+        // Adjust for aces
+        while (value > 21 && aces > 0) {
+            value -= 10;
             aces--;
         }
 
         return value;
     }
 
-    private void updateStatus() {
-        int value = getValue();
-        isBusted = value > 21;
-        isBlackjack = value == 21 && cards.size() == 2;
+    public boolean isBusted() {
+        return getValue() > 21;
+    }
+
+    public boolean isBlackjack() {
+        return cards.size() == 2 && getValue() == 21;
+    }
+
+    public boolean isSoft() {
+        int value = 0;
+        int aces = 0;
+
+        for (Card card : cards) {
+            if (card.isAce()) {
+                aces++;
+            }
+            value += card.getValue();
+        }
+
+        // If we have an ace and reducing its value by 10 still gives us a valid hand
+        return aces > 0 && (value - 10) <= 21;
     }
 
     @Override
