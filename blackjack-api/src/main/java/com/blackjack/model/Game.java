@@ -54,7 +54,7 @@ public class Game {
     }
 
     public enum GameStatus {
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         CREATED,
         IN_PROGRESS,
         COMPLETED
@@ -63,21 +63,21 @@ public class Game {
     public enum GameResult {
         PLAYER_WIN, 
         DEALER_WIN, 
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         PUSH, 
         PLAYER_BLACKJACK, 
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         PLAYER_BUST, 
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         DEALER_BUST
     }
 
     public enum GameAction {
         HIT, 
         STAND, 
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         DOUBLE_DOWN, 
-        @SuppressWarnings("unused") // Reserved for future use
+        @SuppressWarnings("unused") 
         SURRENDER
     }
 

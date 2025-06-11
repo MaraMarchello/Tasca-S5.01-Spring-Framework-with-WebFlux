@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: blackjack-api
+    env: docker
+    region: frankfurt
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_DATA_MONGODB_URI
+        fromDatabase:
+          name: blackjack-mongodb
+          property: connectionString
+      - key: SPRING_R2DBC_URL
+        fromDatabase:
+          name: blackjack-mysql
+          property: connectionString
+      - key: SPRING_R2DBC_USERNAME
+        fromDatabase:
+          name: blackjack-mysql
+          property: username
+      - key: SPRING_R2DBC_PASSWORD
+        fromDatabase:
+          name: blackjack-mysql
+          property: password
+
+databases:
+  - name: blackjack-mongodb
+    region: frankfurt
+    plan: free
+    type: mongodb
+    
+  - name: blackjack-mysql
+    region: frankfurt
+    plan: free
+    type: mysql 
