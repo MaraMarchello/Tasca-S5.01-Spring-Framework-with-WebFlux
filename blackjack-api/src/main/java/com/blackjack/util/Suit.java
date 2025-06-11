@@ -1,5 +1,8 @@
 package com.blackjack.util;
 
+import lombok.Getter;
+
+@Getter
 public enum Suit {
     HEARTS("♥"),
     DIAMONDS("♦"),
@@ -10,9 +13,5 @@ public enum Suit {
 
     Suit(String symbol) {
         this.symbol = symbol;
-    }
-
-    public String getSymbol() {
-        return symbol;
     }
 } 

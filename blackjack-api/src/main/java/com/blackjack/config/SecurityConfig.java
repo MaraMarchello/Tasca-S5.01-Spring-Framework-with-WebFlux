@@ -17,15 +17,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        http
+        return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges
-                .anyExchange().permitAll()  // Allow all endpoints for development
+                .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
+                .pathMatchers("/api/**").permitAll()
+                .anyExchange().permitAll()
             )
             .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable);
-        
-        return http.build();
+            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+            .build();
     }
 
     @Bean

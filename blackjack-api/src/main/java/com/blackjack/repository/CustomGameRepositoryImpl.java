@@ -1,24 +1,26 @@
 package com.blackjack.repository;
 
 import com.blackjack.model.Game;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Component;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Implementation of CustomGameRepository interface.
  * Provides complex MongoDB queries and aggregations for game analysis.
  */
-@Component
+@Repository
 public class CustomGameRepositoryImpl implements CustomGameRepository {
+
+    private static final String STATUS = "status";
+    private static final String PLAYER_ID = "playerId";
+    private static final String START_TIME = "startTime";
 
     private final ReactiveMongoTemplate mongoTemplate;
 
@@ -28,95 +30,98 @@ public class CustomGameRepositoryImpl implements CustomGameRepository {
 
     @Override
     public Flux<Game> findGamesByPlayerIdAndDateRange(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
-        Query query = Query.query(
-                Criteria.where("playerId").is(playerId)
-                        .and("startTime").gte(startDate)
-                        .and("endTime").lte(endDate))
-                .with(Sort.by(Sort.Direction.DESC, "startTime"));
+        Query query = new Query()
+                .addCriteria(Criteria.where(PLAYER_ID).is(playerId)
+                        .and(START_TIME).gte(startDate)
+                        .and(START_TIME).lte(endDate));
+        
+        return mongoTemplate.find(query, Game.class);
+    }
 
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching games by date range: " + e.getMessage())));
+    @Override
+    public Flux<Game> findHighStakeGames(BigDecimal threshold) {
+        Query query = new Query()
+                .addCriteria(Criteria.where("bet").gte(threshold));
+        
+        return mongoTemplate.find(query, Game.class);
+    }
+
+
+
+    private Mono<Game> enrichGameWithDetails(Game game) {
+        // Additional enrichment logic can be added here
+        return Mono.just(game);
     }
 
     @Override
     public Mono<Game> findLastUnfinishedGameByPlayerId(Long playerId) {
-        Query query = Query.query(
-                Criteria.where("playerId").is(playerId)
-                        .and("status").is(Game.GameStatus.IN_PROGRESS))
-                .with(Sort.by(Sort.Direction.DESC, "startTime"))
+        Query query = new Query()
+                .addCriteria(Criteria.where(PLAYER_ID).is(playerId)
+                        .and(STATUS).is(Game.GameStatus.IN_PROGRESS))
+                .with(org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, START_TIME))
                 .limit(1);
-
-        return mongoTemplate.findOne(query, Game.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error fetching unfinished game: " + e.getMessage())));
+        
+        return mongoTemplate.findOne(query, Game.class);
     }
 
     @Override
     public Flux<Game> findTopWinningGames(int limit) {
-        Query query = Query.query(
-                Criteria.where("status").is(Game.GameStatus.COMPLETED)
-                        .and("result").in(Game.GameResult.PLAYER_WIN, Game.GameResult.PLAYER_BLACKJACK))
-                .with(Sort.by(Sort.Direction.DESC, "bet"))
+        Query query = new Query()
+                .addCriteria(Criteria.where("result").in("PLAYER_WIN", "PLAYER_BLACKJACK"))
+                .with(org.springframework.data.domain.Sort.by(
+                        org.springframework.data.domain.Sort.Direction.DESC, "bet"))
                 .limit(limit);
-
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching top winning games: " + e.getMessage())));
+        
+        return mongoTemplate.find(query, Game.class);
     }
 
     @Override
     public Flux<Game> findGamesByPlayerIdAndResult(Long playerId, Game.GameResult result) {
-        Query query = Query.query(
-                Criteria.where("playerId").is(playerId)
-                        .and("result").is(result))
-                .with(Sort.by(Sort.Direction.DESC, "startTime"));
-
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching games by result: " + e.getMessage())));
+        Query query = new Query()
+                .addCriteria(Criteria.where(PLAYER_ID).is(playerId)
+                        .and("result").is(result));
+        
+        return mongoTemplate.find(query, Game.class);
     }
 
     @Override
-    public Flux<Game> findGamesByBetRange(BigDecimal minBet, BigDecimal maxBet, Pageable pageable) {
-        Query query = Query.query(
-                Criteria.where("bet").gte(minBet).lte(maxBet))
+    public Flux<Game> findGamesByBetRange(BigDecimal minBet, BigDecimal maxBet, org.springframework.data.domain.Pageable pageable) {
+        Query query = new Query()
+                .addCriteria(Criteria.where("bet").gte(minBet).lte(maxBet))
                 .with(pageable);
-
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching games by bet range: " + e.getMessage())));
+        
+        return mongoTemplate.find(query, Game.class);
     }
 
     @Override
     public Mono<BigDecimal> calculateTotalWinnings(Long playerId, LocalDateTime startDate, LocalDateTime endDate) {
-        Query query = Query.query(
-            Criteria.where("playerId").is(playerId)
-                .and("startTime").gte(startDate)
-                .and("endTime").lte(endDate)
-                .and("status").is(Game.GameStatus.COMPLETED)
-                .and("result").in(Game.GameResult.PLAYER_WIN, Game.GameResult.PLAYER_BLACKJACK));
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where(PLAYER_ID).is(playerId)
+                        .and(STATUS).is(Game.GameStatus.COMPLETED)
+                        .and(START_TIME).gte(startDate).lte(endDate)),
+                Aggregation.project()
+                        .andExpression("cond: { if: { $eq: ['$result', 'PLAYER_WIN'] }, then: '$bet', else: { cond: { if: { $eq: ['$result', 'PLAYER_BLACKJACK'] }, then: { $multiply: ['$bet', 1.5] }, else: 0 } } }")
+                        .as("winnings"),
+                Aggregation.group().sum("winnings").as("totalWinnings")
+        );
 
-        return mongoTemplate.find(query, Game.class)
-                .map(Game::getBet)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .defaultIfEmpty(BigDecimal.ZERO)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error calculating total winnings: " + e.getMessage())));
+        return mongoTemplate.aggregate(aggregation, Game.class, Object.class)
+                .map(result -> {
+                    org.bson.Document doc = (org.bson.Document) result;
+                    Number winnings = doc.getDouble("totalWinnings");
+                    return winnings != null ? new BigDecimal(winnings.toString()) : BigDecimal.ZERO;
+                })
+                .next()
+                .defaultIfEmpty(BigDecimal.ZERO);
     }
 
     @Override
-    public Flux<Game> findGamesByActionSequence(List<Game.GameAction> actions, int limit) {
-        Query query = Query.query(
-                Criteria.where("actions").all(actions))
-                .with(Sort.by(Sort.Direction.DESC, "startTime"))
+    public Flux<Game> findGamesByActionSequence(java.util.List<Game.GameAction> actions, int limit) {
+        Query query = new Query()
+                .addCriteria(Criteria.where("actions").is(actions))
                 .limit(limit);
-
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching games by action sequence: " + e.getMessage())));
+        
+        return mongoTemplate.find(query, Game.class);
     }
-
-    @Override
-    public Flux<Game> findHighStakeGames(BigDecimal minBet) {
-        Query query = Query.query(
-                Criteria.where("bet").gte(minBet)
-                        .and("status").is(Game.GameStatus.IN_PROGRESS));
-
-        return mongoTemplate.find(query, Game.class)
-                .onErrorResume(e -> Flux.error(new RuntimeException("Error fetching high stake games: " + e.getMessage())));
-    }
-}
+} 

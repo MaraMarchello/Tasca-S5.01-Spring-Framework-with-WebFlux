@@ -7,28 +7,21 @@ import com.blackjack.repository.GameRepository;
 import com.blackjack.service.DeckService;
 import com.blackjack.service.GameService;
 import com.blackjack.service.PlayerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
     private final PlayerService playerService;
     private final DeckService deckService;
-
-    @Autowired
-    public GameServiceImpl(GameRepository gameRepository, 
-                         PlayerService playerService,
-                         DeckService deckService) {
-        this.gameRepository = gameRepository;
-        this.playerService = playerService;
-        this.deckService = deckService;
-    }
 
     @Override
     public Mono<Game> startGame(Long playerId, BigDecimal bet) {
@@ -39,17 +32,15 @@ public class GameServiceImpl implements GameService {
                     }
                     
                     return deckService.needsReshuffle()
-                        .flatMap(needsShuffle -> {
-                            Mono<Void> deckOp = needsShuffle
-                                ? deckService.initializeDeck(6).then(deckService.shuffle().then())
-                                : deckService.shuffle().then();
-                            return deckOp;
-                        })
+                        .flatMap(needsShuffle -> needsShuffle
+                            ? deckService.initializeDeck(6).then().then(deckService.shuffle().then())
+                            : deckService.shuffle().then()
+                        )
                         .then(dealInitialCards())
                         .flatMap(hands -> {
                             Game game = new Game(playerId, bet);
-                            game.setPlayerHand(hands.getPlayerHand());
-                            game.setDealerHand(hands.getDealerHand());
+                            game.setPlayerHand(hands.playerHand);
+                            game.setDealerHand(hands.dealerHand);
                             game.setStartTime(LocalDateTime.now());
                             game.setStatus(Game.GameStatus.IN_PROGRESS);
                             
@@ -139,7 +130,7 @@ public class GameServiceImpl implements GameService {
                         return Mono.error(new IllegalStateException("Cannot take insurance"));
                     }
                     
-                    BigDecimal insuranceBet = game.getBet().divide(BigDecimal.valueOf(2));
+                    BigDecimal insuranceBet = game.getBet().divide(BigDecimal.valueOf(2), RoundingMode.HALF_UP);
                     return playerService.getPlayerById(game.getPlayerId())
                             .flatMap(player -> {
                                 if (player.getBalance().compareTo(insuranceBet) < 0) {
@@ -175,7 +166,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Long> cleanupOldGames(LocalDateTime olderThan) {
-        return gameRepository.deleteCompletedGamesOlderThan(olderThan);
+        return gameRepository.deleteByStatusAndEndTimeBefore(Game.GameStatus.COMPLETED, olderThan);
     }
 
     private Mono<InitialHands> dealInitialCards() {
@@ -259,46 +250,42 @@ public class GameServiceImpl implements GameService {
     private boolean canTakeInsurance(Game game) {
         return game.getStatus() == Game.GameStatus.IN_PROGRESS &&
                game.getInsuranceBet() == null &&
-               game.getDealerHand().getCards().get(0).getRank() == Card.Rank.ACE;
+               game.getDealerHand().getCards().getFirst().getRank() == Card.Rank.ACE;
+    }
+
+    private Mono<Game> handleGameCompletion(Game game, boolean isPlayerWin, BigDecimal payoutMultiplier) {
+        game.setStatus(Game.GameStatus.COMPLETED);
+        game.setEndTime(LocalDateTime.now());
+        
+        if (payoutMultiplier != null && payoutMultiplier.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal winnings = game.getBet().multiply(payoutMultiplier);
+            return playerService.updateBalance(game.getPlayerId(), winnings)
+                    .then(playerService.updateStatistics(game.getPlayerId(), isPlayerWin, game.getBet()))
+                    .then(gameRepository.save(game));
+        }
+        
+        return playerService.updateStatistics(game.getPlayerId(), isPlayerWin, game.getBet())
+                .then(gameRepository.save(game));
     }
 
     private Mono<Game> handlePlayerBust(Game game) {
-        game.setStatus(Game.GameStatus.COMPLETED);
-        game.setEndTime(LocalDateTime.now());
-        return playerService.updateStatistics(game.getPlayerId(), false, game.getBet())
-                .then(gameRepository.save(game));
+        return handleGameCompletion(game, false, null);
     }
 
     private Mono<Game> handlePlayerWin(Game game) {
-        game.setStatus(Game.GameStatus.COMPLETED);
-        game.setEndTime(LocalDateTime.now());
-        BigDecimal winnings = game.getBet().multiply(BigDecimal.valueOf(2));
-        return playerService.updateBalance(game.getPlayerId(), winnings)
-                .then(playerService.updateStatistics(game.getPlayerId(), true, game.getBet()))
-                .then(gameRepository.save(game));
+        return handleGameCompletion(game, true, BigDecimal.valueOf(2));
     }
 
     private Mono<Game> handleDealerWin(Game game) {
-        game.setStatus(Game.GameStatus.COMPLETED);
-        game.setEndTime(LocalDateTime.now());
-        return playerService.updateStatistics(game.getPlayerId(), false, game.getBet())
-                .then(gameRepository.save(game));
+        return handleGameCompletion(game, false, null);
     }
 
     private Mono<Game> handleBlackjackWin(Game game) {
-        game.setStatus(Game.GameStatus.COMPLETED);
-        game.setEndTime(LocalDateTime.now());
-        BigDecimal winnings = game.getBet().multiply(BigDecimal.valueOf(2.5));
-        return playerService.updateBalance(game.getPlayerId(), winnings)
-                .then(playerService.updateStatistics(game.getPlayerId(), true, game.getBet()))
-                .then(gameRepository.save(game));
+        return handleGameCompletion(game, true, BigDecimal.valueOf(2.5));
     }
 
     private Mono<Game> handlePush(Game game) {
-        game.setStatus(Game.GameStatus.COMPLETED);
-        game.setEndTime(LocalDateTime.now());
-        return playerService.updateBalance(game.getPlayerId(), game.getBet())
-                .then(gameRepository.save(game));
+        return handleGameCompletion(game, true, BigDecimal.ONE);
     }
 
     private Mono<Game> handleInsuranceWin(Game game) {
@@ -307,21 +294,5 @@ public class GameServiceImpl implements GameService {
                 .then(handleDealerWin(game));
     }
 
-    private static class InitialHands {
-        private final Hand playerHand;
-        private final Hand dealerHand;
-
-        public InitialHands(Hand playerHand, Hand dealerHand) {
-            this.playerHand = playerHand;
-            this.dealerHand = dealerHand;
-        }
-
-        public Hand getPlayerHand() {
-            return playerHand;
-        }
-
-        public Hand getDealerHand() {
-            return dealerHand;
-        }
-    }
+    private record InitialHands(Hand playerHand, Hand dealerHand) {}
 } 

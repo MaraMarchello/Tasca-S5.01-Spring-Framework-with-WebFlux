@@ -3,7 +3,6 @@ package com.blackjack.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,30 +20,28 @@ public class TestController {
                      "This endpoint can be used for health checks and testing.",
         tags = {"test", "health"}
     )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved test message",
-            content = @Content(
-                mediaType = "text/plain",
-                schema = @Schema(
-                    type = "string",
-                    example = "Test endpoint is working!"
-                )
-            )
-        ),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(
-                    type = "object",
-                    example = "{\"error\": \"Internal Server Error\", \"message\": \"Something went wrong\"}"
-                )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Successfully retrieved test message",
+        content = @Content(
+            mediaType = "text/plain",
+            schema = @Schema(
+                type = "string",
+                example = "Test endpoint is working!"
             )
         )
-    })
+    )
+    @ApiResponse(
+        responseCode = "500",
+        description = "Internal server error",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(
+                type = "object",
+                example = "{\"error\": \"Internal Server Error\", \"message\": \"Something went wrong\"}"
+            )
+        )
+    )
     @GetMapping
     public Mono<String> test() {
         return Mono.just("Test endpoint is working!");
@@ -54,10 +51,8 @@ public class TestController {
         summary = "Echo message",
         description = "Returns the provided message back to the caller"
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Message echoed successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid message provided")
-    })
+    @ApiResponse(responseCode = "200", description = "Message echoed successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid message provided")
     @GetMapping("/echo/{message}")
     public Mono<String> echo(
             @Parameter(description = "Message to echo", example = "Hello World")

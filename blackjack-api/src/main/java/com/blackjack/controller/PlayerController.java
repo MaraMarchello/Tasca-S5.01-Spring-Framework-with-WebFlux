@@ -9,7 +9,6 @@ import com.blackjack.service.PlayerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Slf4j
 @Validated
@@ -37,12 +37,10 @@ public class PlayerController {
     private final PlayerService playerService;
 
     @Operation(summary = "Create a new player", description = "Creates a new player with username and email")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Player created successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Player.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "409", description = "Player with username/email already exists")
-    })
+    @ApiResponse(responseCode = "201", description = "Player created successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Player.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "409", description = "Player with username/email already exists")
     @PostMapping
     public Mono<ResponseEntity<Player>> createPlayer(@Valid @RequestBody CreatePlayerRequest request) {
         log.info("Creating new player with username: {}", request.getUsername());
@@ -52,15 +50,14 @@ public class PlayerController {
         
         return playerService.createPlayer(player)
                 .map(createdPlayer -> ResponseEntity.status(HttpStatus.CREATED).body(createdPlayer))
-                .doOnSuccess(response -> log.info("Player created successfully: {}", response.getBody().getId()));
+                .doOnSuccess(response -> log.info("Player created successfully: {}", 
+                    Optional.ofNullable(response.getBody()).map(Player::getId).orElse(-1L)));
     }
 
     @Operation(summary = "Get player by ID", description = "Retrieves a player by their unique ID")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Player found",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Player.class))),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Player found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Player.class)))
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/{id}")
     public Mono<ResponseEntity<Player>> getPlayerById(
             @Parameter(description = "Player ID", example = "1") 
@@ -73,10 +70,8 @@ public class PlayerController {
     }
 
     @Operation(summary = "Get player by username", description = "Retrieves a player by their username")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Player found"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Player found")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/username/{username}")
     public Mono<ResponseEntity<Player>> getPlayerByUsername(
             @Parameter(description = "Player username", example = "johnsmith") 
@@ -89,11 +84,9 @@ public class PlayerController {
     }
 
     @Operation(summary = "Update player information", description = "Updates player's username and/or email")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Player updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Player updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @PutMapping("/{id}")
     public Mono<ResponseEntity<Player>> updatePlayer(
             @Parameter(description = "Player ID", example = "1") 
@@ -111,10 +104,8 @@ public class PlayerController {
     }
 
     @Operation(summary = "Delete player", description = "Deletes a player by their ID")
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Player deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "204", description = "Player deleted successfully")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> deletePlayer(
             @Parameter(description = "Player ID", example = "1") 
@@ -128,9 +119,7 @@ public class PlayerController {
     }
 
     @Operation(summary = "Get all players", description = "Retrieves all players (paginated in future)")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Players retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Players retrieved successfully")
     @GetMapping
     public Flux<Player> getAllPlayers() {
         log.info("Getting all players");
@@ -139,9 +128,7 @@ public class PlayerController {
     }
 
     @Operation(summary = "Get top players by win rate", description = "Retrieves top players ranked by win rate")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Top players retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Top players retrieved successfully")
     @GetMapping("/top")
     public Flux<Player> getTopPlayers(
             @Parameter(description = "Number of players to return", example = "10")
@@ -152,9 +139,7 @@ public class PlayerController {
     }
 
     @Operation(summary = "Get wealthy players", description = "Retrieves players with balance above threshold")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Wealthy players retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Wealthy players retrieved successfully")
     @GetMapping("/wealthy")
     public Flux<Player> getWealthyPlayers(
             @Parameter(description = "Minimum balance threshold", example = "100.00")
@@ -165,11 +150,9 @@ public class PlayerController {
     }
 
     @Operation(summary = "Get player statistics", description = "Retrieves detailed statistics for a player")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlayerStatsResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlayerStatsResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/{id}/stats")
     public Mono<ResponseEntity<PlayerStatsResponse>> getPlayerStats(
             @Parameter(description = "Player ID", example = "1") 
@@ -183,9 +166,7 @@ public class PlayerController {
     }
 
     @Operation(summary = "Reset daily statistics", description = "Resets daily statistics for all players")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Daily statistics reset successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Daily statistics reset successfully")
     @PostMapping("/reset-daily-stats")
     public Mono<ResponseEntity<String>> resetDailyStats() {
         log.info("Resetting daily statistics for all players");

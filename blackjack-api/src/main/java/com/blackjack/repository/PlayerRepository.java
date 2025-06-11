@@ -18,6 +18,6 @@ public interface PlayerRepository extends R2dbcRepository<Player, Long> {
     Mono<Player> findByUsername(String username);
     Mono<Boolean> existsByUsername(String username);
     
-    @Query("SELECT * FROM player WHERE balance >= :minBalance AND balance <= :maxBalance")
+    @Query("SELECT * FROM players WHERE balance >= :minBalance AND balance <= :maxBalance")
     Flux<Player> findPlayersByBalanceRange(BigDecimal minBalance, BigDecimal maxBalance);
 }

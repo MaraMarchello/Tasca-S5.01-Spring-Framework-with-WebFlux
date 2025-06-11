@@ -23,9 +23,9 @@ public class Hand {
             value += card.getValue();
         }
 
-        // Adjust for aces
-        while (value > 21 && aces > 0) {
-            value -= 10;
+        // Adjust for aces - convert ace from 1 to 11 when beneficial
+        while (aces > 0 && value + 10 <= 21) {
+            value += 10;  // Convert ace from 1 to 11
             aces--;
         }
 
@@ -41,18 +41,15 @@ public class Hand {
     }
 
     public boolean isSoft() {
-        int value = 0;
-        int aces = 0;
-
-        for (Card card : cards) {
-            if (card.isAce()) {
-                aces++;
-            }
-            value += card.getValue();
+        if (cards.stream().noneMatch(Card::isAce)) {
+            return false;  // No aces, can't be soft
         }
-
-        // If we have an ace and reducing its value by 10 still gives us a valid hand
-        return aces > 0 && (value - 10) <= 21;
+        
+        int hardValue = cards.stream().mapToInt(Card::getValue).sum();  // All aces as 1
+        int softValue = getValue();  // With ace optimization
+        
+        // Hand is soft if we're using at least one ace as 11
+        return softValue > hardValue && softValue <= 21;
     }
 
     @Override

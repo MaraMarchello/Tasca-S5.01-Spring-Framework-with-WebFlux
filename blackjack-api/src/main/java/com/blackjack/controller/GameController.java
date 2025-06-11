@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Validated
@@ -39,12 +39,10 @@ public class GameController {
     private final PlayerService playerService;
 
     @Operation(summary = "Start a new game", description = "Creates and starts a new blackjack game for a player")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Game created successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid input data or insufficient funds"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "201", description = "Game created successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input data or insufficient funds")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @PostMapping
     public Mono<ResponseEntity<Game>> createGame(@Valid @RequestBody CreateGameRequest request) {
         log.info("Creating new game for player {} with bet {}", request.getPlayerId(), request.getBet());
@@ -53,15 +51,14 @@ public class GameController {
                 .switchIfEmpty(Mono.error(new PlayerNotFoundException(request.getPlayerId())))
                 .then(gameService.startGame(request.getPlayerId(), request.getBet()))
                 .map(game -> ResponseEntity.status(HttpStatus.CREATED).body(game))
-                .doOnSuccess(response -> log.info("Game created successfully: {}", response.getBody().getId()));
+                .doOnSuccess(response -> log.info("Game created successfully: {}", 
+                    Optional.ofNullable(response.getBody()).map(Game::getId).orElse("unknown")));
     }
 
     @Operation(summary = "Hit - Draw a card", description = "Player draws an additional card in the current game")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Card drawn successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid game state"),
-        @ApiResponse(responseCode = "404", description = "Game not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Card drawn successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid game state")
+    @ApiResponse(responseCode = "404", description = "Game not found")
     @PostMapping("/{gameId}/hit")
     public Mono<ResponseEntity<Game>> hit(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
@@ -75,11 +72,9 @@ public class GameController {
     }
 
     @Operation(summary = "Stand - End turn", description = "Player ends their turn and dealer plays")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Game completed successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid game state"),
-        @ApiResponse(responseCode = "404", description = "Game not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Game completed successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid game state")
+    @ApiResponse(responseCode = "404", description = "Game not found")
     @PostMapping("/{gameId}/stand")
     public Mono<ResponseEntity<Game>> stand(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
@@ -93,11 +88,9 @@ public class GameController {
     }
 
     @Operation(summary = "Split hand", description = "Player splits their hand if they have a pair")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Hand split successfully"),
-        @ApiResponse(responseCode = "400", description = "Cannot split hand or insufficient funds"),
-        @ApiResponse(responseCode = "404", description = "Game not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Hand split successfully")
+    @ApiResponse(responseCode = "400", description = "Cannot split hand or insufficient funds")
+    @ApiResponse(responseCode = "404", description = "Game not found")
     @PostMapping("/{gameId}/split")
     public Mono<ResponseEntity<Game>> split(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
@@ -111,11 +104,9 @@ public class GameController {
     }
 
     @Operation(summary = "Take insurance", description = "Player takes insurance against dealer blackjack")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Insurance taken successfully"),
-        @ApiResponse(responseCode = "400", description = "Cannot take insurance or insufficient funds"),
-        @ApiResponse(responseCode = "404", description = "Game not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Insurance taken successfully")
+    @ApiResponse(responseCode = "400", description = "Cannot take insurance or insufficient funds")
+    @ApiResponse(responseCode = "404", description = "Game not found")
     @PostMapping("/{gameId}/insurance")
     public Mono<ResponseEntity<Game>> insurance(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
@@ -129,11 +120,9 @@ public class GameController {
     }
 
     @Operation(summary = "Get game details", description = "Retrieves detailed information about a specific game")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Game found",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class))),
-        @ApiResponse(responseCode = "404", description = "Game not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Game found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "404", description = "Game not found")
     @GetMapping("/{gameId}")
     public Mono<ResponseEntity<Game>> getGame(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
@@ -142,14 +131,12 @@ public class GameController {
         
         return gameService.getGameById(gameId)
                 .map(ResponseEntity::ok)
-                .switchIfEmpty(Mono.error(GameNotFoundException.forGameId(gameId)));
+                .switchIfEmpty(Mono.error(GameNotFoundException.forGameId(gameId.toString())));
     }
 
     @Operation(summary = "Get player's active games", description = "Retrieves all active games for a specific player")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Active games retrieved successfully"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Active games retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/player/{playerId}/active")
     public Flux<Game> getActiveGames(
             @Parameter(description = "Player ID", example = "1") 
@@ -162,11 +149,9 @@ public class GameController {
     }
 
     @Operation(summary = "Get player's game history", description = "Retrieves completed games for a player within date range")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Game history retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date range"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Game history retrieved successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid date range")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/player/{playerId}/history")
     public Flux<Game> getGameHistory(
             @Parameter(description = "Player ID", example = "1") 
@@ -188,10 +173,8 @@ public class GameController {
     }
 
     @Operation(summary = "Get all player's games", description = "Retrieves all games (active and completed) for a player")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "All games retrieved successfully"),
-        @ApiResponse(responseCode = "404", description = "Player not found")
-    })
+    @ApiResponse(responseCode = "200", description = "All games retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Player not found")
     @GetMapping("/player/{playerId}")
     public Flux<Game> getAllPlayerGames(
             @Parameter(description = "Player ID", example = "1") 
@@ -209,9 +192,7 @@ public class GameController {
     }
 
     @Operation(summary = "Get high stake games", description = "Retrieves games with bets above the specified threshold")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "High stake games retrieved successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "High stake games retrieved successfully")
     @GetMapping("/high-stakes")
     public Flux<Game> getHighStakeGames(
             @Parameter(description = "Minimum bet threshold", example = "100.00")
@@ -222,9 +203,7 @@ public class GameController {
     }
 
     @Operation(summary = "Clean up old games", description = "Removes completed games older than specified date")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Games cleaned up successfully")
-    })
+    @ApiResponse(responseCode = "200", description = "Games cleaned up successfully")
     @DeleteMapping("/cleanup")
     public Mono<ResponseEntity<String>> cleanupOldGames(
             @Parameter(description = "Delete games older than this date", example = "2023-01-01T00:00:00")

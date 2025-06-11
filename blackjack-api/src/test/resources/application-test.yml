@@ -1,0 +1,14 @@
+spring:
+  sql:
+    init:
+      schema-locations: classpath:schema.sql
+      mode: always
+  r2dbc:
+    pool:
+      initial-size: 1
+      max-size: 5
+      
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG
+    org.springframework.boot.sql.init: DEBUG 

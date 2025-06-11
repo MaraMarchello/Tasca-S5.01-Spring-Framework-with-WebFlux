@@ -23,6 +23,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class GameServiceTest {
@@ -135,8 +136,9 @@ class GameServiceTest {
     void stand_ShouldCompleteDealerTurnAndDetermineWinner() {
         when(gameRepository.findById("game123")).thenReturn(Mono.just(testGame));
         when(gameRepository.save(any(Game.class))).thenReturn(Mono.just(testGame));
-        // The determine winner logic will call one of these based on the hand values
-        when(playerService.updateStatistics(eq(1L), anyBoolean(), any(BigDecimal.class))).thenReturn(Mono.just(testPlayer));
+        // Mock all possible playerService calls that might be made based on game outcome
+        lenient().when(playerService.updateBalance(eq(1L), any(BigDecimal.class))).thenReturn(Mono.just(testPlayer));
+        lenient().when(playerService.updateStatistics(eq(1L), anyBoolean(), any(BigDecimal.class))).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(gameService.stand("game123"))
                 .expectNextMatches(game -> {

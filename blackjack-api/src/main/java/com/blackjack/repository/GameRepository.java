@@ -3,7 +3,6 @@ package com.blackjack.repository;
 import com.blackjack.model.Game;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,26 +33,25 @@ public interface GameRepository extends ReactiveMongoRepository<Game, String>, C
     Flux<Game> findByPlayerIdAndStatus(@NotNull Long playerId, @NotNull Game.GameStatus status);
 
     /**
-     * Find games for a player with pagination
+     * Find games for a player sorted by start time
      * @param playerId the ID of the player
      * @param pageable pagination information
      * @return a Flux of games
      */
-    Flux<Game> findByPlayerId(@NotNull Long playerId, Pageable pageable);
+    Flux<Game> findByPlayerIdOrderByStartTimeDesc(@NotNull Long playerId, Pageable pageable);
 
     /**
      * Count active games for a player
      * @param playerId the ID of the player
      * @return number of active games
      */
-    @Query(value = "{ 'playerId': ?0, 'status': 'IN_PROGRESS' }", count = true)
-    Mono<Long> countActiveGamesByPlayerId(@NotNull Long playerId);
+    Mono<Long> countByPlayerIdAndStatus(@NotNull Long playerId, @NotNull Game.GameStatus status);
 
     /**
      * Delete completed games older than specified date
-     * @param date the cutoff date
+     * @param status the game status
+     * @param endTime the cutoff date
      * @return number of games deleted
      */
-    @Query(value = "{ 'status': 'COMPLETED', 'endTime': { $lt: ?0 } }", delete = true)
-    Mono<Long> deleteCompletedGamesOlderThan(java.time.LocalDateTime date);
+    Mono<Long> deleteByStatusAndEndTimeBefore(@NotNull Game.GameStatus status, @NotNull java.time.LocalDateTime endTime);
 }

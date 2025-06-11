@@ -1,12 +1,13 @@
 package com.blackjack.repository;
 
-import com.blackjack.TestcontainersConfiguration;
+import com.blackjack.R2dbcTestConfiguration;
 import com.blackjack.model.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -14,7 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @DataR2dbcTest
-@Import({TestcontainersConfiguration.class})
+@Import({R2dbcTestConfiguration.class})
+@ActiveProfiles("test")
 class PlayerRepositoryTest {
 
     @Autowired
@@ -140,39 +142,30 @@ class PlayerRepositoryTest {
 
     @Test
     void deleteById_ShouldRemovePlayer() {
-        // Given
+        // Given - save the player first
         Mono<Player> savedPlayerMono = playerRepository.save(testPlayer);
         
-        // When & Then
-        StepVerifier.create(savedPlayerMono)
-                .expectNextMatches(player -> player.getId() != null)
-                .verifyComplete();
-        
-        // Get the saved player to extract ID
-        Player savedPlayer = savedPlayerMono.block();
-        
-        StepVerifier.create(playerRepository.deleteById(savedPlayer.getId()))
-                .verifyComplete();
-        
-        StepVerifier.create(playerRepository.findById(savedPlayer.getId()))
+        // When & Then - chain operations reactively
+        StepVerifier.create(savedPlayerMono
+                .flatMap(savedPlayer -> 
+                    playerRepository.deleteById(savedPlayer.getId())
+                        .then(playerRepository.findById(savedPlayer.getId()))
+                ))
                 .verifyComplete();
     }
 
     @Test
     void update_ShouldModifyPlayerData() {
-        // Given
+        // Given - save the player first
         Mono<Player> savedPlayerMono = playerRepository.save(testPlayer);
         
-        // When & Then
-        StepVerifier.create(savedPlayerMono)
-                .expectNextCount(1)
-                .verifyComplete();
-        
-        Player savedPlayer = savedPlayerMono.block();
-        savedPlayer.setBalance(BigDecimal.valueOf(2000));
-        savedPlayer.setUpdatedAt(LocalDateTime.now());
-        
-        StepVerifier.create(playerRepository.save(savedPlayer))
+        // When & Then - chain the operations to avoid blocking issues
+        StepVerifier.create(savedPlayerMono
+                .flatMap(savedPlayer -> {
+                    savedPlayer.setBalance(BigDecimal.valueOf(2000));
+                    savedPlayer.setUpdatedAt(LocalDateTime.now());
+                    return playerRepository.save(savedPlayer);
+                }))
                 .expectNextMatches(updated -> 
                     updated.getBalance().equals(BigDecimal.valueOf(2000)) &&
                     updated.getUsername().equals("testUser"))

@@ -3,6 +3,7 @@ package com.blackjack.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
 
 @Data
 @NoArgsConstructor
@@ -23,19 +24,16 @@ public class Card {
         CLUBS("♣"),
         SPADES("♠");
 
+        @Getter
         private final String symbol;
 
         Suit(String symbol) {
             this.symbol = symbol;
         }
-
-        public String getSymbol() {
-            return symbol;
-        }
     }
 
     public enum Rank {
-        ACE(11, "A"),
+        ACE(1, "A"),
         TWO(2, "2"),
         THREE(3, "3"),
         FOUR(4, "4"),
@@ -49,20 +47,14 @@ public class Card {
         QUEEN(10, "Q"),
         KING(10, "K");
 
+        @Getter
         private final int value;
+        @Getter
         private final String symbol;
 
         Rank(int value, String symbol) {
             this.value = value;
             this.symbol = symbol;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public String getSymbol() {
-            return symbol;
         }
     }
 

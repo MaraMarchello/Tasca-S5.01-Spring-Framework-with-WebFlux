@@ -8,6 +8,5 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 @EnableR2dbcRepositories(basePackages = "com.blackjack.repository")
 @EnableReactiveMongoRepositories(basePackages = "com.blackjack.repository")
 public class DatabaseConfig {
-    // R2DBC will automatically handle schema creation based on application.yml
-    // MongoDB configuration is handled by Spring Boot auto-configuration
+
 } 

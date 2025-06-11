@@ -1,5 +1,8 @@
 package com.blackjack.util;
 
+import lombok.Getter;
+
+@Getter
 public enum Rank {
     ACE(1, "A"),
     TWO(2, "2"),
@@ -21,13 +24,5 @@ public enum Rank {
     Rank(int value, String symbol) {
         this.value = value;
         this.symbol = symbol;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public String getSymbol() {
-        return symbol;
     }
 } 

@@ -1,6 +1,6 @@
 package com.blackjack.repository;
 
-import com.blackjack.TestcontainersConfiguration;
+import com.blackjack.MongoTestConfiguration;
 import com.blackjack.model.Game;
 import com.blackjack.model.Hand;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @DataMongoTest
-@Import(TestcontainersConfiguration.class)
+@Import(MongoTestConfiguration.class)
 class GameRepositoryTest {
 
     @Autowired
@@ -94,7 +94,8 @@ class GameRepositoryTest {
         
         // When & Then
         StepVerifier.create(
-                gameRepository.save(highStakeGame)
+                gameRepository.deleteAll()
+                    .then(gameRepository.save(highStakeGame))
                     .thenMany(gameRepository.findHighStakeGames(BigDecimal.valueOf(500))))
                 .expectNextMatches(game -> 
                     game.getBet().compareTo(BigDecimal.valueOf(500)) > 0 &&

@@ -5,50 +5,54 @@ import com.blackjack.service.DeckService;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class DeckServiceImpl implements DeckService {
     private static final int RESHUFFLE_THRESHOLD = 20; // Reshuffle when less than 20 cards remain
-    private final AtomicReference<List<Card>> currentDeck = new AtomicReference<>(new ArrayList<>());
+    private final AtomicReference<Deque<Card>> currentDeck = new AtomicReference<>(new ArrayDeque<>());
 
     @Override
     public Flux<Card> initializeDeck(int numberOfDecks) {
         return Mono.fromCallable(() -> {
-            List<Card> newDeck = new ArrayList<>();
+            ArrayList<Card> tempDeck = new ArrayList<>();
             for (int i = 0; i < numberOfDecks; i++) {
                 for (Card.Suit suit : Card.Suit.values()) {
                     for (Card.Rank rank : Card.Rank.values()) {
-                        newDeck.add(new Card(suit, rank));
+                        tempDeck.add(new Card(suit, rank));
                     }
                 }
             }
+            Collections.shuffle(tempDeck);
+            ArrayDeque<Card> newDeck = new ArrayDeque<>(tempDeck);
             currentDeck.set(newDeck);
-            return newDeck;
+            return tempDeck;
         }).flatMapMany(Flux::fromIterable);
     }
 
     @Override
     public Flux<Card> shuffle() {
         return Mono.fromCallable(() -> {
-            List<Card> deck = new ArrayList<>(currentDeck.get());
-            Collections.shuffle(deck);
-            currentDeck.set(deck);
-            return deck;
+            ArrayList<Card> tempDeck = new ArrayList<>(currentDeck.get());
+            Collections.shuffle(tempDeck);
+            ArrayDeque<Card> shuffledDeck = new ArrayDeque<>(tempDeck);
+            currentDeck.set(shuffledDeck);
+            return tempDeck;
         }).flatMapMany(Flux::fromIterable);
     }
 
     @Override
     public Mono<Card> drawCard() {
         return Mono.fromCallable(() -> {
-            List<Card> deck = currentDeck.get();
+            Deque<Card> deck = currentDeck.get();
             if (deck.isEmpty()) {
                 throw new IllegalStateException("No cards remaining in the deck");
             }
-            Card card = deck.remove(0);
+            Card card = deck.removeFirst();
             currentDeck.set(deck);
             return card;
         });
@@ -57,13 +61,13 @@ public class DeckServiceImpl implements DeckService {
     @Override
     public Flux<Card> drawCards(int count) {
         return Mono.fromCallable(() -> {
-            List<Card> deck = currentDeck.get();
+            Deque<Card> deck = currentDeck.get();
             if (deck.size() < count) {
                 throw new IllegalStateException("Not enough cards in the deck");
             }
-            List<Card> drawnCards = new ArrayList<>();
+            ArrayList<Card> drawnCards = new ArrayList<>();
             for (int i = 0; i < count; i++) {
-                drawnCards.add(deck.remove(0));
+                drawnCards.add(deck.removeFirst());
             }
             currentDeck.set(deck);
             return drawnCards;

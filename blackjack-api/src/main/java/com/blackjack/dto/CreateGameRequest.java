@@ -16,11 +16,11 @@ import java.math.BigDecimal;
 public class CreateGameRequest {
     
     @NotNull(message = "Player ID is required")
-    @Schema(description = "ID of the player starting the game", example = "1", required = true)
+    @Schema(description = "ID of the player starting the game", example = "1")
     private Long playerId;
     
     @NotNull(message = "Bet amount is required")
     @DecimalMin(value = "1.0", message = "Bet amount must be at least 1.00")
-    @Schema(description = "Initial bet amount", example = "10.00", required = true)
+    @Schema(description = "Initial bet amount", example = "10.00")
     private BigDecimal bet;
 } 

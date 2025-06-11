@@ -60,6 +60,9 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mongodb")
 	testImplementation("org.testcontainers:mysql")
+	testImplementation("org.testcontainers:r2dbc") // Required for R2DBC TestContainers integration
+	testRuntimeOnly("io.asyncer:r2dbc-mysql:1.0.5")
+	testRuntimeOnly("com.mysql:mysql-connector-j") // Required by TestContainers for MySQL
 }
 
 dependencyManagement {

@@ -1,7 +1,5 @@
-DROP TABLE IF EXISTS players;
-DROP TABLE IF EXISTS games;
-
-CREATE TABLE players (
+-- Create players table for R2DBC tests
+CREATE TABLE IF NOT EXISTS players (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -11,7 +9,7 @@ CREATE TABLE players (
     total_winnings DECIMAL(19,2) NOT NULL DEFAULT 0.00,
     games_played_today INT NOT NULL DEFAULT 0,
     games_won_today INT NOT NULL DEFAULT 0,
-    last_login_date TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    last_login_date DATETIME,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
+); 

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
+import java.util.List;
 
 /**
  * Custom repository interface for complex Game queries in MongoDB.
@@ -84,13 +85,13 @@ public interface CustomGameRepository {
      * @return a Flux of games with matching action sequence
      */
     Flux<Game> findGamesByActionSequence(
-            @NotNull java.util.List<Game.GameAction> actions,
+            @NotNull List<Game.GameAction> actions,
             @Min(1) int limit);
 
     /**
      * Find high stake games (bet amount above threshold)
-     * @param minBet minimum bet amount
+     * @param threshold minimum bet amount
      * @return a Flux of high stake games
      */
-    Flux<Game> findHighStakeGames(@NotNull @Min(0) BigDecimal minBet);
+    Flux<Game> findHighStakeGames(BigDecimal threshold);
 }

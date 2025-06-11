@@ -9,14 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -53,7 +51,7 @@ class PlayerServiceTest {
 
     @Test
     void createPlayer_ShouldSaveAndReturnPlayer() {
-        when(playerRepository.save(any(Player.class))).thenReturn(testPlayer);
+        when(playerRepository.save(any(Player.class))).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.createPlayer(testPlayer))
                 .expectNext(testPlayer)
@@ -64,7 +62,7 @@ class PlayerServiceTest {
 
     @Test
     void getPlayerById_ShouldReturnPlayer_WhenExists() {
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(testPlayer));
+        when(playerRepository.findById(1L)).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.getPlayerById(1L))
                 .expectNext(testPlayer)
@@ -75,7 +73,7 @@ class PlayerServiceTest {
 
     @Test
     void getPlayerById_ShouldReturnEmpty_WhenNotExists() {
-        when(playerRepository.findById(999L)).thenReturn(Optional.empty());
+        when(playerRepository.findById(999L)).thenReturn(Mono.empty());
 
         StepVerifier.create(playerService.getPlayerById(999L))
                 .verifyComplete();
@@ -85,7 +83,7 @@ class PlayerServiceTest {
 
     @Test
     void getPlayerByUsername_ShouldReturnPlayer_WhenExists() {
-        when(playerRepository.findByUsername("testUser")).thenReturn(Optional.of(testPlayer));
+        when(playerRepository.findByUsername("testUser")).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.getPlayerByUsername("testUser"))
                 .expectNext(testPlayer)
@@ -100,8 +98,8 @@ class PlayerServiceTest {
         updatedPlayer.setUsername("updatedUser");
         updatedPlayer.setEmail("updated@example.com");
 
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(testPlayer));
-        when(playerRepository.save(any(Player.class))).thenReturn(testPlayer);
+        when(playerRepository.findById(1L)).thenReturn(Mono.just(testPlayer));
+        when(playerRepository.save(any(Player.class))).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.updatePlayer(1L, updatedPlayer))
                 .expectNext(testPlayer)
@@ -117,6 +115,8 @@ class PlayerServiceTest {
 
     @Test
     void deletePlayer_ShouldCallRepository() {
+        when(playerRepository.deleteById(1L)).thenReturn(Mono.empty());
+
         StepVerifier.create(playerService.deletePlayer(1L))
                 .verifyComplete();
 
@@ -125,63 +125,63 @@ class PlayerServiceTest {
 
     @Test
     void updateBalance_ShouldUpdateAndReturnPlayer_WhenSufficientFunds() {
-        BigDecimal amount = BigDecimal.valueOf(-100);
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(testPlayer));
-        when(playerRepository.updateBalance(eq(1L), eq(amount))).thenReturn(1);
+        BigDecimal amount = BigDecimal.valueOf(100);
+        when(playerRepository.findById(1L)).thenReturn(Mono.just(testPlayer));
+        when(playerRepository.save(any(Player.class))).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.updateBalance(1L, amount))
                 .expectNext(testPlayer)
                 .verifyComplete();
 
-        verify(playerRepository).updateBalance(1L, amount);
+        verify(playerRepository).findById(1L);
+        verify(playerRepository).save(any(Player.class));
     }
 
     @Test
     void updateBalance_ShouldThrowException_WhenInsufficientFunds() {
         BigDecimal amount = BigDecimal.valueOf(-2000);
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(testPlayer));
-        when(playerRepository.updateBalance(eq(1L), eq(amount))).thenReturn(0);
+        when(playerRepository.findById(1L)).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.updateBalance(1L, amount))
                 .expectError(IllegalStateException.class)
                 .verify();
 
-        verify(playerRepository).updateBalance(1L, amount);
+        verify(playerRepository).findById(1L);
     }
 
     @Test
     void updateStatistics_ShouldUpdateAndReturnPlayer() {
-        when(playerRepository.findById(1L)).thenReturn(Optional.of(testPlayer));
-        when(playerRepository.updateStatistics(eq(1L), eq(1), any(BigDecimal.class))).thenReturn(1);
+        when(playerRepository.findById(1L)).thenReturn(Mono.just(testPlayer));
+        when(playerRepository.save(any(Player.class))).thenReturn(Mono.just(testPlayer));
 
         StepVerifier.create(playerService.updateStatistics(1L, true, BigDecimal.valueOf(100)))
                 .expectNext(testPlayer)
                 .verifyComplete();
 
-        verify(playerRepository).updateStatistics(eq(1L), eq(1), any(BigDecimal.class));
+        verify(playerRepository).findById(1L);
+        verify(playerRepository).save(any(Player.class));
     }
 
     @Test
     void getTopPlayers_ShouldReturnPlayers() {
-        when(playerRepository.findTopPlayersByWinRate(any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(testPlayer)));
+        when(playerRepository.findAll()).thenReturn(Flux.just(testPlayer));
 
         StepVerifier.create(playerService.getTopPlayers(10))
                 .expectNext(testPlayer)
                 .verifyComplete();
 
-        verify(playerRepository).findTopPlayersByWinRate(any(PageRequest.class));
+        verify(playerRepository).findAll();
     }
 
     @Test
     void getPlayersWithBalanceAbove_ShouldReturnPlayers() {
-        when(playerRepository.findPlayersWithBalanceAbove(any(BigDecimal.class)))
-                .thenReturn(Arrays.asList(testPlayer));
+        when(playerRepository.findPlayersByBalanceRange(any(BigDecimal.class), any(BigDecimal.class)))
+                .thenReturn(Flux.just(testPlayer));
 
         StepVerifier.create(playerService.getPlayersWithBalanceAbove(BigDecimal.valueOf(500)))
                 .expectNext(testPlayer)
                 .verifyComplete();
 
-        verify(playerRepository).findPlayersWithBalanceAbove(any(BigDecimal.class));
+        verify(playerRepository).findPlayersByBalanceRange(any(BigDecimal.class), any(BigDecimal.class));
     }
 }

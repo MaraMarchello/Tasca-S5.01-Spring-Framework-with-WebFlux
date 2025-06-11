@@ -33,7 +33,7 @@ public class Deck {
         if (cards.isEmpty()) {
             initialize();
         }
-        return cards.remove(cards.size() - 1);
+        return cards.removeLast();
     }
 
     public int remainingCards() {
