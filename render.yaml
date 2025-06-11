@@ -38,7 +38,7 @@ services:
 
       # Database Initialization
       - key: SPRING_SQL_INIT_MODE
-        value: "always"
+        value: "embedded"
       - key: SPRING_SQL_INIT_CONTINUE_ON_ERROR
         value: "true"
       - key: SPRING_SQL_INIT_PLATFORM
@@ -57,7 +57,9 @@ services:
         value: "DEBUG"
       - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_MONGODB
         value: "DEBUG"
-      - key: LOGGING_LEVEL_ORG_SPRINGDOC
+      - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_R2DBC
+        value: "DEBUG"
+      - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_AUTOCONFIGURE_SQL
         value: "DEBUG"
 
       # Server Configuration
@@ -82,6 +84,4 @@ databases:
     region: frankfurt
     plan: free
     type: mysql
-    ipAllowList: []  # Allow all IPs
-    postStartCommand: |
-      mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS blackjack;" 
+    ipAllowList: []  # Allow all IPs 
