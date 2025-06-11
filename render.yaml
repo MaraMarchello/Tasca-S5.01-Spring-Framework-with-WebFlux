@@ -6,10 +6,17 @@ services:
     plan: free
     healthCheckPath: /actuator/health
     envVars:
+      # MongoDB Configuration
       - key: SPRING_DATA_MONGODB_URI
         fromDatabase:
           name: blackjack-mongodb
           property: connectionString
+      - key: SPRING_DATA_MONGODB_DATABASE
+        value: blackjack
+      - key: SPRING_DATA_MONGODB_AUTO_INDEX_CREATION
+        value: "true"
+
+      # MySQL/R2DBC Configuration
       - key: SPRING_R2DBC_URL
         fromDatabase:
           name: blackjack-mysql
@@ -22,6 +29,40 @@ services:
         fromDatabase:
           name: blackjack-mysql
           property: password
+      - key: SPRING_R2DBC_POOL_INITIAL_SIZE
+        value: "5"
+      - key: SPRING_R2DBC_POOL_MAX_SIZE
+        value: "20"
+      - key: SPRING_R2DBC_POOL_MAX_IDLE_TIME
+        value: "30m"
+
+      # Security Configuration
+      - key: SPRING_SECURITY_USER_NAME
+        value: "admin"
+      - key: SPRING_SECURITY_USER_PASSWORD
+        value: "admin"  # You should change this to a secure password
+
+      # Logging Configuration
+      - key: LOGGING_LEVEL_COM_BLACKJACK
+        value: "DEBUG"
+      - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_R2DBC
+        value: "DEBUG"
+      - key: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_DATA_MONGODB
+        value: "DEBUG"
+      - key: LOGGING_LEVEL_ORG_SPRINGDOC
+        value: "DEBUG"
+
+      # Server Configuration
+      - key: SERVER_PORT
+        value: "8080"
+
+      # OpenAPI/Swagger Configuration
+      - key: SPRINGDOC_SWAGGER_UI_PATH
+        value: "/swagger-ui"
+      - key: SPRINGDOC_API_DOCS_PATH
+        value: "/v3/api-docs"
+      - key: SPRINGDOC_SWAGGER_UI_ENABLED
+        value: "true"
 
 databases:
   - name: blackjack-mongodb
