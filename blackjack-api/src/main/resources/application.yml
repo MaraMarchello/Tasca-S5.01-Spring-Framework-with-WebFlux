@@ -11,6 +11,12 @@ spring:
       max-size: 20
       max-idle-time: 30m
   
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      platform: mysql
+  
   data:
     mongodb:
       host: localhost

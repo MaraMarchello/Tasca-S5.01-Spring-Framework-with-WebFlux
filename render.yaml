@@ -36,6 +36,14 @@ services:
       - key: SPRING_R2DBC_POOL_MAX_IDLE_TIME
         value: "30m"
 
+      # Database Initialization
+      - key: SPRING_SQL_INIT_MODE
+        value: "always"
+      - key: SPRING_SQL_INIT_CONTINUE_ON_ERROR
+        value: "true"
+      - key: SPRING_SQL_INIT_PLATFORM
+        value: "mysql"
+
       # Security Configuration
       - key: SPRING_SECURITY_USER_NAME
         value: "admin"
@@ -73,4 +81,7 @@ databases:
   - name: blackjack-mysql
     region: frankfurt
     plan: free
-    type: mysql 
+    type: mysql
+    ipAllowList: []  # Allow all IPs
+    postStartCommand: |
+      mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE DATABASE IF NOT EXISTS blackjack;" 
