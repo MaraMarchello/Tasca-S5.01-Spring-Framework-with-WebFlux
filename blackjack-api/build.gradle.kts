@@ -13,6 +13,11 @@ java {
 	}
 }
 
+// Configure Java compiler to preserve parameter names
+tasks.withType<JavaCompile> {
+	options.compilerArgs.add("-parameters")
+}
+
 configurations {
 	compileOnly {
 		extendsFrom(configurations.annotationProcessor.get())

@@ -72,7 +72,7 @@ class GameRepositoryTest {
                         gameRepository.save(testGame),
                         gameRepository.save(game1),
                         gameRepository.save(game2)))
-                    .thenMany(gameRepository.findByPlayerId(
+                    .thenMany(gameRepository.findByPlayerIdOrderByStartTimeDesc(
                         testPlayerId, 
                         PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "startTime")))))
                 .expectNextCount(2)
@@ -81,7 +81,7 @@ class GameRepositoryTest {
 
     @Test
     void countActiveGamesByPlayerId_ShouldReturnCorrectCount() {
-        StepVerifier.create(gameRepository.countActiveGamesByPlayerId(testPlayerId))
+        StepVerifier.create(gameRepository.countByPlayerIdAndStatus(testPlayerId, Game.GameStatus.IN_PROGRESS))
                 .expectNext(1L)
                 .verifyComplete();
     }
@@ -118,7 +118,9 @@ class GameRepositoryTest {
                     .then(Mono.when(
                         gameRepository.save(oldGame),
                         gameRepository.save(recentGame)))
-                    .then(gameRepository.deleteCompletedGamesOlderThan(LocalDateTime.now().minusDays(1))))
+                    .then(gameRepository.deleteByStatusAndEndTimeBefore(
+                        Game.GameStatus.COMPLETED, 
+                        LocalDateTime.now().minusDays(1))))
                 .expectNext(1L)
                 .verifyComplete();
     }

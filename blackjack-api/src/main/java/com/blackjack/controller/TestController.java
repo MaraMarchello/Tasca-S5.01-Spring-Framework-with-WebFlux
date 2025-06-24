@@ -1,5 +1,6 @@
 package com.blackjack.controller;
 
+import com.blackjack.dto.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,10 +37,7 @@ public class TestController {
         description = "Internal server error",
         content = @Content(
             mediaType = "application/json",
-            schema = @Schema(
-                type = "object",
-                example = "{\"error\": \"Internal Server Error\", \"message\": \"Something went wrong\"}"
-            )
+            schema = @Schema(implementation = ErrorResponse.class)
         )
     )
     @GetMapping
@@ -51,12 +49,22 @@ public class TestController {
         summary = "Echo message",
         description = "Returns the provided message back to the caller"
     )
-    @ApiResponse(responseCode = "200", description = "Message echoed successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid message provided")
+    @ApiResponse(responseCode = "200", description = "Message echoed successfully",
+        content = @Content(
+            mediaType = "text/plain",
+            schema = @Schema(
+                type = "string",
+                example = "Echo: Hello World"
+            )
+        ))
+    @ApiResponse(responseCode = "400", description = "Invalid message provided",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/echo/{message}")
     public Mono<String> echo(
             @Parameter(description = "Message to echo", example = "Hello World")
-            @PathVariable String message) {
+            @PathVariable("message") String message) {
         return Mono.just("Echo: " + message);
     }
 } 

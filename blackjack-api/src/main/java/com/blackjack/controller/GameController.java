@@ -1,6 +1,7 @@
 package com.blackjack.controller;
 
 import com.blackjack.dto.CreateGameRequest;
+import com.blackjack.dto.ErrorResponse;
 import com.blackjack.exception.GameNotFoundException;
 import com.blackjack.exception.PlayerNotFoundException;
 import com.blackjack.model.Game;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +42,12 @@ public class GameController {
     @Operation(summary = "Start a new game", description = "Creates and starts a new blackjack game for a player")
     @ApiResponse(responseCode = "201", description = "Game created successfully",
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
-    @ApiResponse(responseCode = "400", description = "Invalid input data or insufficient funds")
-    @ApiResponse(responseCode = "404", description = "Player not found")
+    @ApiResponse(responseCode = "400", description = "Invalid input data or insufficient funds",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Player not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping
     public Mono<ResponseEntity<Game>> createGame(@Valid @RequestBody CreateGameRequest request) {
         log.info("Creating new game for player {} with bet {}", request.getPlayerId(), request.getBet());
@@ -55,13 +61,18 @@ public class GameController {
     }
 
     @Operation(summary = "Hit - Draw a card", description = "Player draws an additional card in the current game")
-    @ApiResponse(responseCode = "200", description = "Card drawn successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid game state")
-    @ApiResponse(responseCode = "404", description = "Game not found")
+    @ApiResponse(responseCode = "200", description = "Card drawn successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid game state",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Game not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{gameId}/hit")
     public Mono<ResponseEntity<Game>> hit(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
-            @PathVariable String gameId) {
+            @PathVariable("gameId") String gameId) {
         log.info("Player hitting in game: {}", gameId);
         
         return gameService.hit(gameId)
@@ -71,13 +82,18 @@ public class GameController {
     }
 
     @Operation(summary = "Stand - End turn", description = "Player ends their turn and dealer plays")
-    @ApiResponse(responseCode = "200", description = "Game completed successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid game state")
-    @ApiResponse(responseCode = "404", description = "Game not found")
+    @ApiResponse(responseCode = "200", description = "Game completed successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid game state",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Game not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{gameId}/stand")
     public Mono<ResponseEntity<Game>> stand(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
-            @PathVariable String gameId) {
+            @PathVariable("gameId") String gameId) {
         log.info("Player standing in game: {}", gameId);
         
         return gameService.stand(gameId)
@@ -87,13 +103,18 @@ public class GameController {
     }
 
     @Operation(summary = "Split hand", description = "Player splits their hand if they have a pair")
-    @ApiResponse(responseCode = "200", description = "Hand split successfully")
-    @ApiResponse(responseCode = "400", description = "Cannot split hand or insufficient funds")
-    @ApiResponse(responseCode = "404", description = "Game not found")
+    @ApiResponse(responseCode = "200", description = "Hand split successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "400", description = "Cannot split hand or insufficient funds",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Game not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{gameId}/split")
     public Mono<ResponseEntity<Game>> split(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
-            @PathVariable String gameId) {
+            @PathVariable("gameId") String gameId) {
         log.info("Player splitting in game: {}", gameId);
         
         return gameService.split(gameId)
@@ -103,13 +124,18 @@ public class GameController {
     }
 
     @Operation(summary = "Take insurance", description = "Player takes insurance against dealer blackjack")
-    @ApiResponse(responseCode = "200", description = "Insurance taken successfully")
-    @ApiResponse(responseCode = "400", description = "Cannot take insurance or insufficient funds")
-    @ApiResponse(responseCode = "404", description = "Game not found")
+    @ApiResponse(responseCode = "200", description = "Insurance taken successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
+    @ApiResponse(responseCode = "400", description = "Cannot take insurance or insufficient funds",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Game not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/{gameId}/insurance")
     public Mono<ResponseEntity<Game>> insurance(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
-            @PathVariable String gameId) {
+            @PathVariable("gameId") String gameId) {
         log.info("Player taking insurance in game: {}", gameId);
         
         return gameService.insurance(gameId)
@@ -121,11 +147,14 @@ public class GameController {
     @Operation(summary = "Get game details", description = "Retrieves detailed information about a specific game")
     @ApiResponse(responseCode = "200", description = "Game found",
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = Game.class)))
-    @ApiResponse(responseCode = "404", description = "Game not found")
+    @ApiResponse(responseCode = "404", description = "Game not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/{gameId}")
     public Mono<ResponseEntity<Game>> getGame(
             @Parameter(description = "Game ID", example = "507f1f77bcf86cd799439011") 
-            @PathVariable String gameId) {
+            @PathVariable("gameId") String gameId) {
         log.info("Getting game details for: {}", gameId);
         
         return gameService.getGameById(gameId)
@@ -134,12 +163,17 @@ public class GameController {
     }
 
     @Operation(summary = "Get player's active games", description = "Retrieves all active games for a specific player")
-    @ApiResponse(responseCode = "200", description = "Active games retrieved successfully")
-    @ApiResponse(responseCode = "404", description = "Player not found")
+    @ApiResponse(responseCode = "200", description = "Active games retrieved successfully",
+        content = @Content(mediaType = "application/json", 
+            array = @ArraySchema(schema = @Schema(implementation = Game.class))))
+    @ApiResponse(responseCode = "404", description = "Player not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/player/{playerId}/active")
     public Flux<Game> getActiveGames(
             @Parameter(description = "Player ID", example = "1") 
-            @PathVariable Long playerId) {
+            @PathVariable("playerId") Long playerId) {
         log.info("Getting active games for player: {}", playerId);
         
         return playerService.getPlayerById(playerId)
@@ -148,13 +182,19 @@ public class GameController {
     }
 
     @Operation(summary = "Get player's game history", description = "Retrieves completed games for a player within date range")
-    @ApiResponse(responseCode = "200", description = "Game history retrieved successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid date range")
-    @ApiResponse(responseCode = "404", description = "Player not found")
+    @ApiResponse(responseCode = "200", description = "Game history retrieved successfully",
+        content = @Content(mediaType = "application/json", 
+            array = @ArraySchema(schema = @Schema(implementation = Game.class))))
+    @ApiResponse(responseCode = "400", description = "Invalid date range",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Player not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/player/{playerId}/history")
     public Flux<Game> getGameHistory(
             @Parameter(description = "Player ID", example = "1") 
-            @PathVariable Long playerId,
+            @PathVariable("playerId") Long playerId,
             @Parameter(description = "Start date", example = "2023-12-01T00:00:00")
             @RequestParam(required = false) LocalDateTime startDate,
             @Parameter(description = "End date", example = "2023-12-31T23:59:59")
@@ -172,12 +212,17 @@ public class GameController {
     }
 
     @Operation(summary = "Get all player's games", description = "Retrieves all games (active and completed) for a player")
-    @ApiResponse(responseCode = "200", description = "All games retrieved successfully")
-    @ApiResponse(responseCode = "404", description = "Player not found")
+    @ApiResponse(responseCode = "200", description = "All games retrieved successfully",
+        content = @Content(mediaType = "application/json", 
+            array = @ArraySchema(schema = @Schema(implementation = Game.class))))
+    @ApiResponse(responseCode = "404", description = "Player not found",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/player/{playerId}")
     public Flux<Game> getAllPlayerGames(
             @Parameter(description = "Player ID", example = "1") 
-            @PathVariable Long playerId) {
+            @PathVariable("playerId") Long playerId) {
         log.info("Getting all games for player: {}", playerId);
         
         return playerService.getPlayerById(playerId)
@@ -191,7 +236,13 @@ public class GameController {
     }
 
     @Operation(summary = "Get high stake games", description = "Retrieves games with bets above the specified threshold")
-    @ApiResponse(responseCode = "200", description = "High stake games retrieved successfully")
+    @ApiResponse(responseCode = "200", description = "High stake games retrieved successfully",
+        content = @Content(mediaType = "application/json", 
+            array = @ArraySchema(schema = @Schema(implementation = Game.class))))
+    @ApiResponse(responseCode = "400", description = "Invalid threshold value",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/high-stakes")
     public Flux<Game> getHighStakeGames(
             @Parameter(description = "Minimum bet threshold", example = "100.00")
@@ -202,7 +253,12 @@ public class GameController {
     }
 
     @Operation(summary = "Clean up old games", description = "Removes completed games older than specified date")
-    @ApiResponse(responseCode = "200", description = "Games cleaned up successfully")
+    @ApiResponse(responseCode = "200", description = "Games cleaned up successfully",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = String.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid date parameter",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error",
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping("/cleanup")
     public Mono<ResponseEntity<String>> cleanupOldGames(
             @Parameter(description = "Delete games older than this date", example = "2023-01-01T00:00:00")
